@@ -6,9 +6,9 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: sample-httpserver
+    name: httpserver
   minReplicas: 1
-  maxReplicas: 10
+  maxReplicas: 5
   behavior:
     scaleDown:
       stabilizationWindowSeconds: 30
