@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpserver
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpserver
+  template:
+    metadata:
+      labels:
+        app: httpserver
+    spec:
+      containers:
+        - name: httpserver
+          image: addozhang/httpserver-n-metrics:latest
+          imagePullPolicy: Always
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpserver
+  namespace: monitoring
+  labels:
+    app: httpserver
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "http"
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      protocol: TCP
+      name: http
+  selector:
+    app: httpserver
