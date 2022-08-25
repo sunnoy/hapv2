@@ -1,0 +1,40 @@
+apiVersion: autoscaling.crane.io/v1alpha1
+kind: EffectiveHorizontalPodAutoscaler
+metadata:
+  name: php-apache
+  annotations:
+    # metric-query.autoscaling.crane.io 是固定的前缀，后面是 Metric 名字，需跟 spec.metrics 中的 Metric.name 相同，支持 Pods 类型和 External 类型
+    metric-query.autoscaling.crane.io/http_requests_qps: "sum(rate(http_requests_total[5m])) by (pod)"
+spec:
+  # ScaleTargetRef is the reference to the workload that should be scaled.
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: httpserver
+  minReplicas: 1        # MinReplicas is the lower limit replicas to the scale target which the autoscaler can scale down to.
+  maxReplicas: 5       # MaxReplicas is the upper limit replicas to the scale target which the autoscaler can scale up to.
+  scaleStrategy: Auto   # ScaleStrategy indicate the strategy to scaling target, value can be "Auto" and "Manual".
+  # Metrics contains the specifications for which to use to calculate the desired replica count.
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests_qps
+        target:
+          type: AverageValue
+          averageValue: 500m
+  # Prediction defines configurations for predict resources.
+  # If unspecified, defaults don't enable prediction.
+  prediction:
+    predictionWindowSeconds: 3600   # PredictionWindowSeconds is the time window to predict metrics in the future.
+    predictionAlgorithm:
+      algorithmType: dsp
+      dsp:
+        sampleInterval: "60s"
+        historyLength: "6d"

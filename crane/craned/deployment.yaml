@@ -46,7 +46,7 @@ spec:
                   fieldPath: metadata.namespace
           command:
             - /craned
-            - --prometheus-address=PROMETHEUS_ADDRESS
+            - --prometheus-address=http://prometheus-k8s.monitoring.svc:9090/
             - --feature-gates=Analysis=true,TimeSeriesPrediction=true,Autoscaling=true
             - --recommendation-configuration-file=/tmp/recommendation-config/config.yaml
             - -v=4

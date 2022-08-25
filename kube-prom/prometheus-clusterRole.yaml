@@ -9,13 +9,19 @@ metadata:
     app.kubernetes.io/version: 2.36.1
   name: prometheus-k8s
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - nodes/metrics
-  verbs:
-  - get
-- nonResourceURLs:
-  - /metrics
-  verbs:
-  - get
+  - verbs:
+      - get
+      - list
+      # ts=2022-08-25T12:59:17.528Z caller=klog.go:116 level=error component=k8s_client_runtime func=ErrorDepth msg="pkg/mod/k8s.io/client-go@v0.24.0/tools/cache/reflector.go:167: Failed to watch *v1.Pod: unknown (get pods)"
+      - watch
+    apiGroups:
+      - ''
+    resources:
+      - nodes/metrics
+      - pods
+      - services
+      - endpoints
+  - verbs:
+      - get
+    nonResourceURLs:
+      - /metrics

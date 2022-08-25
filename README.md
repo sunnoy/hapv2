@@ -279,3 +279,92 @@ DisabledPolicySelect ScalingPolicySelect = "Disabled"
 )
 
 ```
+
+
+
+# crane
+
+## Crane install
+
+```bash
+k apply -f craned
+
+k apply -f crane-crd
+
+k apply -f crane-agent 
+```
+
+## Crane Metric-Adapter
+
+Kubernetes 限制一个 ApiService 只能配置一个后端服务，因此，为了在一个集群内使用 Crane 提供的 Metric 和 PrometheusAdapter 提供的 Metric，Crane 支持了 RemoteAdapter 解决此问题
+
+Crane Metric-Adapter 支持配置一个 Kubernetes Service 作为一个远程 Adapter
+Crane Metric-Adapter 处理请求时会先检查是否是 Crane 提供的 Local Metric，如果不是，则转发给远程 Adapter
+
+```bash
+k get apiservices.apiregistration.k8s.io | grep metrics
+v1beta1.custom.metrics.k8s.io          crane-system/metric-adapter     True        3m40s
+v1beta1.external.metrics.k8s.io        crane-system/metric-adapter     True        27h
+v1beta1.metrics.k8s.io                 monitoring/prometheus-adapter   True        27h
+
+# metric-adapter 通过代理的方法将他自己不提供的metrics通过remote的方式转发到prometheus-adapter 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metric-adapter
+  namespace: crane-system
+spec:
+  template:
+    spec:
+      containers:
+      - args:
+          #添加外部 Adapter 配置
+        - --remote-adapter=true
+        - --remote-adapter-service-namespace=crane-system
+        - --remote-adapter-service-name=prometheus-adapter
+        - --remote-adapter-service-port=443
+```
+
+## 创建epha
+
+```bash
+k apply -f ehpa.yaml
+
+
+```
+
+# 问题
+
+- prom查询不到其他ns的资源
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus-k8s
+  labels:
+    app.kubernetes.io/component: prometheus
+    app.kubernetes.io/instance: k8s
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: kube-prometheus
+    app.kubernetes.io/version: 2.36.1
+rules:
+  - verbs:
+      - get
+      - list
+      # ts=2022-08-25T12:59:17.528Z caller=klog.go:116 level=error component=k8s_client_runtime func=ErrorDepth msg="pkg/mod/k8s.io/client-go@v0.24.0/tools/cache/reflector.go:167: Failed to watch *v1.Pod: unknown (get pods)"
+      - watch
+    apiGroups:
+      - ''
+    resources:
+      - nodes/metrics
+      - pods
+      - services
+      - endpoints
+  - verbs:
+      - get
+    nonResourceURLs:
+      - /metrics
+
+
+```
+
