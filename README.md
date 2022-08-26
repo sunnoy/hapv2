@@ -172,16 +172,28 @@ Conditions:
 
 ## 测试hpa
 
+用到cpu使用率作为缩放指标的时候，容器的资源限制需要写上，cpu的hpa从<unknown>到显示指标需要等待时间长一些三到五分钟
+
+```yaml
+          resources:
+            limits:
+              cpu: 500m
+            requests:
+              cpu: 200m
+```
+
 ```bash
 
 k port-forward httpserver-64db7f5658-d2pl2 3000:3000
 
 https://github.com/tsenart/vegeta/releases
 
-
+# 加负载
+while sleep 0.01; do wget -q -O- http://php-apache; done
 
 # 压测结果
 echo "GET http://127.0.0.1:3000" | vegeta attack -duration 60s -connections 10 -rate 240/s | vegeta report
+
 Requests      [total, rate, throughput]         14400, 240.02, 239.08
 Duration      [total, attack, wait]             1m0s, 59.996s, 234.553ms
 Latencies     [min, mean, 50, 90, 95, 99, max]  44.962ms, 155.317ms, 85.478ms, 369.544ms, 497.953ms, 670.624ms, 844.616ms
@@ -216,6 +228,12 @@ sample-httpserver   Deployment/httpserver   200m/50      1         5         5  
 字段介绍
 https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#horizontalpodautoscalerspec-v2-autoscaling
  主要metrics和behavior
+
+
+## 创建hpa命令行
+
+kubectl autoscale deployment httpserver --cpu-percent=10 --min=1 --max=3
+
 
 ## metrics
 
@@ -368,3 +386,38 @@ rules:
 
 ```
 
+# cpu 指标没有 
+
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/crane-system/pods/*/crane_pod_cpu_usage" | jq .
+
+# crd资源
+
+```bash
+analytics                           analytics    analysis.crane.io/v1alpha1             true         Analytics
+configsets                          cs           analysis.crane.io/v1alpha1             true         ConfigSet
+recommendationrules                 rr           analysis.crane.io/v1alpha1             false        RecommendationRule
+recommendations                     recommend    analysis.crane.io/v1alpha1             true         Recommendation
+
+
+effectivehorizontalpodautoscalers   ehpa         autoscaling.crane.io/v1alpha1          true         EffectiveHorizontalPodAutoscaler
+effectiveverticalpodautoscalers     evpa         autoscaling.crane.io/v1alpha1          true         EffectiveVerticalPodAutoscaler
+substitutes                         subs         autoscaling.crane.io/v1alpha1          true         Substitute
+
+
+avoidanceactions                    avoid        ensurance.crane.io/v1alpha1            false        AvoidanceAction
+nodeqosensurancepolicies            nep          ensurance.crane.io/v1alpha1            false        NodeQOSEnsurancePolicy
+podqosensurancepolicies             qep          ensurance.crane.io/v1alpha1            true         PodQOSEnsurancePolicy
+
+
+clusternodepredictions              cnp          prediction.crane.io/v1alpha1           true         ClusterNodePrediction
+timeseriespredictions               tsp          prediction.crane.io/v1alpha1           true         TimeSeriesPrediction
+```
+##  推荐
+
+通过 analytics.analysis.crane.io 创建后可以创建资源 recommendationrules.analysis.crane.io
+
+recommendationrules.analysis.crane.io 创建 recommendations.analysis.crane.io 显示推荐的结果 资源或者副本
+
+## ehpa
+
+effectivehorizontalpodautoscalers.autoscaling.crane.io 创建 集群 hpa和timeseriespredictions.prediction.crane.io

@@ -16,7 +16,11 @@ spec:
       containers:
         - name: httpserver
           image: addozhang/httpserver-n-metrics:latest
-          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: 500m
+            requests:
+              cpu: 200m
 
 ---
 

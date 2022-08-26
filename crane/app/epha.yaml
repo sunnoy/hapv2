@@ -16,12 +16,12 @@ spec:
   scaleStrategy: Auto   # ScaleStrategy indicate the strategy to scaling target, value can be "Auto" and "Manual".
   # Metrics contains the specifications for which to use to calculate the desired replica count.
   metrics:
-    - type: Resource
-      resource:
+    - resource:
         name: cpu
         target:
+          averageUtilization: 10
           type: Utilization
-          averageUtilization: 50
+      type: Resource
     - type: Pods
       pods:
         metric:
@@ -32,9 +32,9 @@ spec:
   # Prediction defines configurations for predict resources.
   # If unspecified, defaults don't enable prediction.
   prediction:
-    predictionWindowSeconds: 3600   # PredictionWindowSeconds is the time window to predict metrics in the future.
+    predictionWindowSeconds: 600   # PredictionWindowSeconds is the time window to predict metrics in the future.
     predictionAlgorithm:
       algorithmType: dsp
       dsp:
         sampleInterval: "60s"
-        historyLength: "7d"
+        historyLength: "3d"

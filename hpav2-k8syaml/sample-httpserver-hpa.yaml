@@ -23,10 +23,18 @@ spec:
           value: 100
           periodSeconds: 15
   metrics:
-    - type: Pods
-      pods:
-        metric:
-          name: http_requests_qps
+    - resource:
+        name: cpu
         target:
-          type: AverageValue
-          averageValue: 50000m
+          averageUtilization: 10
+          type: Utilization
+      type: Resource
+
+
+#    - type: Pods
+#      pods:
+#        metric:
+#          name: http_requests_qps
+#        target:
+#          type: AverageValue
+#          averageValue: 50000m
